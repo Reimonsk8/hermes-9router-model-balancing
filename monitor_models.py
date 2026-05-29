@@ -1,83 +1,50 @@
-import sqlite3
-import yaml
-import os
+#!/usr/bin/env python3
+import argparse
+from hermes_metrics import load_config, get_model_chain, get_usage_metrics, load_model_limits
 
-def load_config():
-    config_path = os.path.expanduser("~/.hermes/config.yaml")
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
-
-def get_model_chain(config):
-    """
-    Returns the ordered list of models: first the default,
-    then all fallback providers.
-    """
-    chain = []
-    
-    # 1. Default model
-    default_model = config.get("model", {}).get("default")
-    if default_model:
-        chain.append(default_model)
-        
-    # 2. Fallback providers
-    for provider in config.get("fallback_providers", []):
-        model = provider.get("model")
-        if model and model not in chain:
-            chain.append(model)
-            
-    return chain
-
-def get_usage_metrics():
-    db_path = os.path.expanduser("~/.hermes/state.db")
-    metrics = {}
-    if os.path.exists(db_path):
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        # Querying model usage
-        cursor.execute("SELECT model, SUM(input_tokens + output_tokens + reasoning_tokens) FROM sessions GROUP BY model")
-        for row in cursor.fetchall():
-            if row[0]:
-                metrics[row[0]] = row[1]
-        conn.close()
-    return metrics
-
-def progress_bar(tokens, max_tokens, bar_length=20):
-    # If max_tokens is 0, we treat it as 0% usage
-    if max_tokens <= 0:
-        return f"[{'░' * bar_length}] 0%"
-    
-    percent = (tokens / max_tokens) * 100
-    filled = int(bar_length * tokens // max_tokens)
-    bar = "█" * filled + "░" * (bar_length - filled)
-    return f"[{bar}] {int(percent)}%"
 
 def main():
+    parser = argparse.ArgumentParser(description="Monitor Hermes model token usage")
+    parser.add_argument("--days", type=int, default=None, help="Only show usage from last N days")
+    parser.add_argument("--limit", type=int, default=0, help="Default token limit for models without a configured limit")
+    args = parser.parse_args()
+
     config = load_config()
-    model_chain = get_model_chain(config)
-    metrics = get_usage_metrics()
-    
-    # Define what "full capacity" looks like. 
-    # For now, we take the max token usage found to represent 100% capacity.
-    all_metrics = list(metrics.values())
-    max_tokens_found = max(all_metrics) if all_metrics else 0
-    
-    print(f"{'Model Name':<50} | {'Tokens':<12} | {'Usage Status'}")
-    print("-" * 85)
-    
-    # Sort models by token usage (ascending), then the rest
-    sorted_models = sorted(model_chain, key=lambda m: metrics.get(m, 0))
-    
-    # We display every model in the configuration chain, sorted by usage.
-    for model in sorted_models:
-        tokens = metrics.get(model, 0)
-        
-        # Display model metrics
-        # Use max_tokens_found as the baseline for "full"
-        bar = progress_bar(tokens, max_tokens_found)
-        print(f"{model:<50} | {tokens:<12,d} | {bar}")
-        
-    print("-" * 85)
-    print(f"Total Tokens Tracked: {sum(all_metrics):,d}")
+    chain = get_model_chain(config)
+    metrics = get_usage_metrics(days=args.days)
+    limits = load_model_limits(config)
+
+    default_limit = args.limit
+
+    enriched = []
+    for entry in chain:
+        model = entry["model"]
+        used = metrics.get(model, 0)
+        limit = limits.get(model, default_limit)
+        left = max(limit - used, 0) if limit else 0
+        pct = (used / limit) * 100 if limit > 0 else 0
+        enriched.append({**entry, "used": used, "limit": limit, "left": left, "pct": pct})
+
+    enriched.sort(key=lambda m: m["pct"])
+
+    total_used = sum(m["used"] for m in enriched)
+    total_limit = sum(m["limit"] for m in enriched) if any(m["limit"] for m in enriched) else 0
+
+    print(f"{'Role':<10} | {'Model':<48} | {'Used':>10} | {'Limit':>10} | {'Left':>10} | {'%':>6}")
+    print("-" * 105)
+
+    for m in enriched:
+        limit_str = f"{m['limit']:,d}" if m['limit'] else "N/A"
+        left_str = f"{m['left']:,d}" if m['limit'] else "N/A"
+        pct_str = f"{m['pct']:.1f}%" if m['limit'] else "N/A"
+        print(f"{m['role']:<10} | {m['model']:<48} | {m['used']:>10,d} | {limit_str:>10} | {left_str:>10} | {pct_str:>6}")
+
+    print("-" * 105)
+    total_line = f"Total Used: {total_used:,d}"
+    if total_limit:
+        total_line += f"  |  Total Limit: {total_limit:,d}  |  Overall: {(total_used/total_limit)*100:.1f}%"
+    print(total_line)
+
 
 if __name__ == "__main__":
     main()
