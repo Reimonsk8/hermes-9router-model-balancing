@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 import os
 import sqlite3
+import logging
+import tempfile
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("pihole_exporter")
 
 PIHOLE_DB = "/etc/pihole/pihole-FTL.db"
 PROM_OUTPUT = "/var/lib/alloy/pihole_metrics.prom"
@@ -8,7 +13,7 @@ PROM_OUTPUT = "/var/lib/alloy/pihole_metrics.prom"
 
 def export_pihole_metrics(db_path: str = PIHOLE_DB, output_path: str = PROM_OUTPUT):
     if not os.path.exists(db_path):
-        print(f"Pi-hole DB not found: {db_path}")
+        logger.warning(f"Pi-hole DB not found: {db_path}")
         return
 
     try:
@@ -32,8 +37,10 @@ def export_pihole_metrics(db_path: str = PIHOLE_DB, output_path: str = PROM_OUTP
 
         conn.close()
 
+        # Atomic write
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, "w") as f:
+        fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(output_path))
+        with os.fdopen(fd, 'w') as f:
             f.write("# HELP pihole_total_queries Total DNS queries (cumulative)\n")
             f.write("# TYPE pihole_total_queries counter\n")
             f.write(f"pihole_total_queries {total}\n")
@@ -46,8 +53,9 @@ def export_pihole_metrics(db_path: str = PIHOLE_DB, output_path: str = PROM_OUTP
             f.write("# TYPE pihole_queries_last_15m gauge\n")
             f.write(f"pihole_queries_last_15m{{type=\"total\"}} {last_15m_total}\n")
             f.write(f"pihole_queries_last_15m{{type=\"blocked\"}} {last_15m_blocked}\n")
+        os.replace(temp_path, output_path)
     except Exception as e:
-        print(f"Error exporting Pi-hole metrics: {e}")
+        logger.error(f"Error exporting Pi-hole metrics: {e}")
 
 
 if __name__ == "__main__":

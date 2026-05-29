@@ -2,21 +2,29 @@
 import argparse
 import os
 import yaml
+import logging
+import tempfile
 from hermes_metrics import load_config, get_model_chain, get_usage_metrics, load_model_limits, sanitize_prometheus_label
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("auto_balance")
 
 DEFAULT_PROM_PATH = "/var/lib/alloy/model_usage.prom"
 
 
 def update_fallback_order(days: int = 7, default_limit: int = 0, dry_run: bool = False, prom_path: str = DEFAULT_PROM_PATH):
-    config = load_config()
-    chain = get_model_chain(config)
-    metrics = get_usage_metrics(days=days)
-    limits = load_model_limits(config)
+    try:
+        config = load_config()
+        chain = get_model_chain(config)
+        metrics = get_usage_metrics(days=days)
+        limits = load_model_limits(config)
+    except Exception as e:
+        logger.error(f"Failed to load metrics/config: {e}")
+        return
 
     fallback_entries = [e for e in chain if e["role"] == "fallback"]
     if not fallback_entries:
-        print("No fallback providers found in config to reorder.")
+        logger.warning("No fallback providers found in config to reorder.")
         return
 
     sorted_fallbacks = sorted(fallback_entries, key=lambda e: metrics.get(e["model"], 0))
@@ -26,21 +34,16 @@ def update_fallback_order(days: int = 7, default_limit: int = 0, dry_run: bool =
 
     config_path = os.path.expanduser("~/.hermes/config.yaml")
     if dry_run:
-        print(f"[DRY RUN] Would update {config_path}")
-        print(f"[DRY RUN] New fallback order:")
-        for i, e in enumerate(sorted_fallbacks, 1):
-            tokens = metrics.get(e["model"], 0)
-            print(f"  {i}. {e['provider']}/{e['model']} ({tokens:,d} tokens)")
+        logger.info(f"[DRY RUN] Would update {config_path}")
     else:
         with open(config_path, "w") as f:
             yaml.safe_dump(config, f)
-        print(f"Updated fallback_providers in {config_path}")
-        for i, e in enumerate(sorted_fallbacks, 1):
-            tokens = metrics.get(e["model"], 0)
-            print(f"  {i}. {e['provider']}/{e['model']} ({tokens:,d} tokens)")
+        logger.info(f"Updated fallback_providers in {config_path}")
 
+    # Atomic write for Prometheus metrics
     os.makedirs(os.path.dirname(prom_path), exist_ok=True)
-    with open(prom_path, "w") as f:
+    fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(prom_path))
+    with os.fdopen(fd, 'w') as f:
         f.write("# HELP hermes_model_tokens_used Total tokens used by model\n")
         f.write("# TYPE hermes_model_tokens_used gauge\n")
         f.write("# HELP hermes_model_tokens_limit Token limit per model\n")
@@ -58,8 +61,8 @@ def update_fallback_order(days: int = 7, default_limit: int = 0, dry_run: bool =
             f.write(f'hermes_model_tokens_used{{model="{model}"}} {used}\n')
             f.write(f'hermes_model_tokens_limit{{model="{model}"}} {limit}\n')
             f.write(f'hermes_model_usage_percent{{model="{model}"}} {pct:.2f}\n')
-
-    print(f"Wrote Prometheus metrics to {prom_path}")
+    os.replace(temp_path, prom_path)
+    logger.info(f"Wrote Prometheus metrics to {prom_path}")
 
 
 if __name__ == "__main__":
