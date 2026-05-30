@@ -25,7 +25,7 @@ def main():
         pct = (used / limit) * 100 if limit > 0 else 0
         enriched.append({**entry, "used": used, "limit": limit, "left": left, "pct": pct})
 
-    enriched.sort(key=lambda m: m["pct"])
+    enriched.sort(key=lambda m: (m['limit'] is None, m['pct']))
 
     total_used = sum(m["used"] for m in enriched)
     total_limit = sum(m["limit"] for m in enriched) if any(m["limit"] for m in enriched) else 0
