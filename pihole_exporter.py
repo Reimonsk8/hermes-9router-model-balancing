@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+"""
+pihole_exporter.py — Pi-hole DNS Metrics (Optional Extra Feature)
+===================================================================
+Exports Pi-hole DNS query statistics to Prometheus text format.
+
+This is an OPTIONAL add-on, not part of the core Hermes 9Router routing system.
+Pi-hole is not required for model balancing functionality.
+
+Usage:
+    python3 pihole_exporter.py
+"""
+
 import os
 import sqlite3
 import logging
@@ -54,6 +66,8 @@ def export_pihole_metrics(db_path: str = PIHOLE_DB, output_path: str = PROM_OUTP
             f.write(f"pihole_queries_last_15m{{type=\"total\"}} {last_15m_total}\n")
             f.write(f"pihole_queries_last_15m{{type=\"blocked\"}} {last_15m_blocked}\n")
         os.replace(temp_path, output_path)
+
+        logger.info(f"Exported Pi-hole metrics: {total} total, {blocked} blocked")
     except Exception as e:
         logger.error(f"Error exporting Pi-hole metrics: {e}")
 

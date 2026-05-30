@@ -1,0 +1,123 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Hermes 9Router — Pricing Database
+# Prices per million tokens for input/output. Health baselines, quotas, quality.
+# ──────────────────────────────────────────────────────────────────────────────
+
+provider_default_health:
+  groq: 98
+  openrouter: 95
+  openai: 92
+  google: 90
+  anthropic: 88
+  deepseek: 85
+  nous: 80
+  local: 99
+
+provider_quotas:
+  groq:
+    rpm: 30
+    daily: 1000
+  gemini:
+    rpm: 15
+    daily: 1500
+  openrouter:
+    rpm: 60
+    daily: 5000
+  openai:
+    rpm: 500
+    daily: 10000
+  anthropic:
+    rpm: 50
+    daily: 5000
+
+models:
+  claude-sonnet-4:
+    input_per_million: 3.00
+    output_per_million: 15.00
+    provider: anthropic
+    quality_score: 95
+    tier: premium
+  claude-opus-4:
+    input_per_million: 15.00
+    output_per_million: 75.00
+    provider: anthropic
+    quality_score: 99
+    tier: premium
+  claude-haiku-3.5:
+    input_per_million: 0.80
+    output_per_million: 4.00
+    provider: anthropic
+    quality_score: 82
+    tier: budget
+  gpt-4o:
+    input_per_million: 2.50
+    output_per_million: 10.00
+    provider: openai
+    quality_score: 90
+    tier: premium
+  gpt-4o-mini:
+    input_per_million: 0.15
+    output_per_million: 0.60
+    provider: openai
+    quality_score: 78
+    tier: budget
+  gemini-2.0-flash:
+    input_per_million: 0.075
+    output_per_million: 0.30
+    provider: google
+    quality_score: 75
+    tier: free
+  gemini-2.0-pro:
+    input_per_million: 1.00
+    output_per_million: 4.00
+    provider: google
+    quality_score: 85
+    tier: premium
+  deepseek-chat:
+    input_per_million: 0.14
+    output_per_million: 0.28
+    provider: deepseek
+    quality_score: 82
+    tier: budget
+  deepseek-reasoner:
+    input_per_million: 0.55
+    output_per_million: 2.19
+    provider: deepseek
+    quality_score: 88
+    tier: premium
+  nous-hermes-3:
+    input_per_million: 0.15
+    output_per_million: 0.60
+    provider: nous
+    quality_score: 72
+    tier: free
+  qwen-2.5-72b:
+    input_per_million: 0.90
+    output_per_million: 0.90
+    provider: nous
+    quality_score: 74
+    tier: free
+  qwen-2.5-coder-32b:
+    input_per_million: 0.18
+    output_per_million: 0.18
+    provider: openrouter
+    quality_score: 76
+    tier: free
+  llama-3.3-70b:
+    input_per_million: 0.12
+    output_per_million: 0.12
+    provider: groq
+    quality_score: 73
+    tier: free
+  mixtral-8x7b:
+    input_per_million: 0.10
+    output_per_million: 0.10
+    provider: groq
+    quality_score: 68
+    tier: free
+  local:
+    input_per_million: 0.0
+    output_per_million: 0.0
+    provider: local
+    quality_score: 65
+    tier: free

@@ -1,319 +1,177 @@
-# Hermes 9 Router — Model Balancing & Metrics
+# Hermes 9Router — Smart Model Fallback Optimizer
 
-Auto-balances Hermes model fallback order by token usage and exports Prometheus metrics for Grafana.
+Companion for [Hermes Agent](https://github.com/NousResearch/hermes-agent) that automatically optimizes `fallback_providers` ordering using **cost-aware, health-aware, quota-aware, budget-aware** multi-factor scoring. Exports rich Prometheus metrics for Grafana observability.
 
-## 1. What It Does & How To Use
-
-### Overview
-
-Three Python scripts + one shared module that run on your Hermes host:
-
-| Script | Purpose |
-|--------|---------|
-| `auto_balance.py` | Reads token usage from Hermes' SQLite DB, sorts fallback providers by usage (least-used first), rewrites `~/.hermes/config.yaml`, and writes Prometheus metrics |
-| `monitor_models.py` | CLI viewer — displays a sorted table of models with tokens used, limit, remaining, and percentage |
-| `pihole_exporter.py` | Exports Pi-hole DNS query stats to Prometheus (cumulative counters + 15-minute window) |
-| `hermes_metrics.py` | Shared module — config loading, DB queries, model limits |
-
-### How It Works
-
-1. You configure models under `fallback_providers` in `~/.hermes/config.yaml`
-2. Optionally set per-model token limits under `model_limits`
-3. Run `auto_balance.py` (e.g., via cron every hour):
-   - Reads the last 7 days of token usage from `~/.hermes/state.db`
-   - Reorders `fallback_providers` so the **least-used** model is tried first
-   - Writes Prometheus gauge metrics to `/var/lib/alloy/model_usage.prom`
-4. Alloy (or Prometheus textfile collector) scrapes the `.prom` files
-5. Grafana visualizes usage, limits, and percentages
-
-### Configuration
-
-Add to `~/.hermes/config.yaml`:
-
-```yaml
-fallback_providers:
-  - provider: openrouter
-    model: anthropic/claude-sonnet-4
-  - provider: openai
-    model: gpt-4o
-  - provider: nous
-    model: nous-hermes-3
-
-model_limits:
-  anthropic/claude-sonnet-4: 1000000
-  gpt-4o: 500000
-  nous-hermes-3: 2000000
-```
-
-### Running
+## Quick Start
 
 ```bash
-# View usage in terminal
-python3 monitor_models.py --days 7
+# Full optimization run (reads Hermes DB + config, scores, reorders, exports)
+python3 auto_balance.py --days 7 --budget 50
 
-# With a default limit for unconfigured models
-python3 monitor_models.py --days 7 --limit 1000000
+# Preview without making changes
+python3 auto_balance.py --dry-run
 
-# Auto-balance (update config + write metrics)
-python3 auto_balance.py --days 7
+# CLI usage viewer with smart scores
+python3 monitor_models.py --days 7 --scores
 
-# Dry-run (see what would change without writing)
-python3 auto_balance.py --days 7 --dry-run
+# CLI viewer with budget and alerts
+python3 monitor_models.py --days 7 --budget --alerts
 
-# With a default token limit
-python3 auto_balance.py --days 7 --default-limit 1000000
+# Daemon mode (persistent, polls every 5 minutes)
+python3 auto_balance.py --daemon --interval 300
 
-# Pi-hole metrics
-python3 pihole_exporter.py
-
-# Or run everything via cron
+# Cron (every hour)
 0 * * * * /root/.hermes/scripts/refresh_metrics.sh
 ```
 
-## 2. Grafana Dashboard (Copy-Paste JSON)
+## What It Does
 
-Create a new dashboard in Grafana → **Import** → paste the JSON below.
+1. **Reads** Hermes Agent's `~/.hermes/config.yaml` and `~/.hermes/state.db`
+2. **Syncs** session data into a companion database (`~/.hermes/9router/9router.db`)
+3. **Scores** every model in the fallback chain using 6 weighted factors:
+   - Quality score (from pricing DB)
+   - Provider health (success rate × latency)
+   - Quota remaining (RPM/daily limits)
+   - Latency performance
+   - Cost efficiency
+   - Usage balance
+4. **Reorders** `fallback_providers` so the best model is tried first
+5. **Exports** 30+ Prometheus metrics for Grafana dashboards
+6. **Alerts** when providers degrade, budgets run low, or quotas exhaust
 
-Requires a Prometheus data source named `Prometheus` (rename in the `datasource` fields if different).
+## Scoring Formula
 
-```json
-{
-  "__inputs": [],
-  "__requires": [],
-  "title": "Hermes Router & Pi-hole",
-  "uid": "hermes-pihole",
-  "panels": [
-    {
-      "datasource": { "type": "prometheus", "uid": "PROMETHEUS_UID" },
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "stacking": { "mode": "normal" }, "barAlignment": 0 },
-          "unit": "short",
-          "min": 0
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "id": 1,
-      "options": {
-        "orientation": "auto",
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "targets": [
-        {
-          "expr": "hermes_model_tokens_used",
-          "legendFormat": "{{model}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Tokens Used per Model",
-      "type": "bargauge"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PROMETHEUS_UID" },
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "stacking": { "mode": "normal" }, "barAlignment": 0 },
-          "unit": "short",
-          "min": 0
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "id": 2,
-      "options": {
-        "orientation": "auto",
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "targets": [
-        {
-          "expr": "hermes_model_tokens_limit",
-          "legendFormat": "{{model}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Token Limits per Model",
-      "type": "bargauge"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PROMETHEUS_UID" },
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "stacking": { "mode": "normal" } },
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 50 },
-              { "color": "red", "value": 85 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
-      "id": 3,
-      "options": {
-        "orientation": "horizontal",
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "targets": [
-        {
-          "expr": "hermes_model_usage_percent",
-          "legendFormat": "{{model}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Usage % per Model",
-      "type": "bargauge"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PROMETHEUS_UID" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "cps",
-          "min": 0
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
-      "id": 4,
-      "options": {
-        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }
-      },
-      "targets": [
-        {
-          "expr": "rate(pihole_total_queries[5m])",
-          "legendFormat": "Total queries/s",
-          "refId": "A"
-        },
-        {
-          "expr": "rate(pihole_blocked_queries[5m])",
-          "legendFormat": "Blocked queries/s",
-          "refId": "B"
-        }
-      ],
-      "title": "DNS Query Rate (5m avg)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PROMETHEUS_UID" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
-      "id": 5,
-      "options": {
-        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }
-      },
-      "targets": [
-        {
-          "expr": "increase(pihole_total_queries[15m])",
-          "legendFormat": "Total queries/15m",
-          "refId": "A"
-        },
-        {
-          "expr": "increase(pihole_blocked_queries[15m])",
-          "legendFormat": "Blocked queries/15m",
-          "refId": "B"
-        }
-      ],
-      "title": "DNS Queries per 15 min",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PROMETHEUS_UID" },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 50 },
-              { "color": "red", "value": 100 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
-      "id": 6,
-      "options": {
-        "orientation": "auto",
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "targets": [
-        {
-          "expr": "pihole_queries_last_15m{type=\"total\"}",
-          "legendFormat": "Last 15m",
-          "refId": "A"
-        },
-        {
-          "expr": "pihole_queries_last_15m{type=\"blocked\"}",
-          "legendFormat": "Blocked (15m)",
-          "refId": "B"
-        }
-      ],
-      "title": "Pi-hole Queries (Last 15m Snapshot)",
-      "type": "stat"
-    }
-  ],
-  "refresh": "30s",
-  "schemaVersion": 36,
-  "tags": ["hermes", "pi-hole", "dns"],
-  "templating": { "list": [] },
-  "time": { "from": "now-6h", "to": "now" },
-  "timepicker": {},
-  "timezone": "browser"
-}
+```
+score = quality^0.25 × (health × budget_mult)^0.25 × quota^0.15 × latency^0.10 × cost^0.15 × balance^0.10
 ```
 
-> **Note:** Replace `"uid": "PROMETHEUS_UID"` with your actual Prometheus data source UID. Find it in Grafana → Connections → Data sources → your Prometheus source → UID field.
+Budget zones dynamically adjust strategy:
+| Zone | Spend | Behavior |
+|------|-------|----------|
+| 🟢 Green | < 50% | Best model first |
+| 🟡 Yellow | 50-75% | Prefer efficient |
+| 🟠 Orange | 75-90% | Aggressive savings |
+| 🔴 Red | > 90% | Free models only |
 
-## 3. Features & Development Status
+## Files
 
-### ✅ Implemented
+| File | Purpose |
+|------|---------|
+| `hermes_metrics.py` | Core library — DB, pricing, health, budget, scoring, alerts |
+| `auto_balance.py` | CLI entry point — single run or persistent daemon |
+| `monitor_models.py` | CLI viewer — usage, scores, budget, alerts, JSON output |
+| `pihole_exporter.py` | **[Optional extra]** Pi-hole DNS metrics exporter |
+| `pricing.yaml` | Pricing database — 15+ models with costs, quality, quotas |
+| `refresh_metrics.sh` | Cron script (core only) |
+| `update_all_metrics.sh` | Full run including optional Pi-hole |
+| `dashboard-example.json` | Grafana dashboard with all panels |
 
-| Feature | Status |
-|---------|--------|
-| Token usage reader from Hermes SQLite state DB | Done |
-| Time-windowed queries (`--days` flag for recent usage) | Done |
-| Per-model configurable token limits (`model_limits` in config) | Done |
-| Automatic reordering of `fallback_providers` by usage (least-used first) | Done |
-| Dry-run mode to preview changes | Done |
-| CLI usage viewer with used/limit/left/% table | Done |
-| Prometheus metrics for tokens used, limit, and usage % per model | Done |
-| Pi-hole cumulative DNS counter (total + blocked) | Done |
-| Pi-hole 15-minute sliding window gauge | Done |
-| Shared module eliminates duplicated DB/config code | Done |
-| Grafana dashboard JSON (6 panels) | Done |
+## Grafana Dashboard
 
-### 🚧 In Progress / Planned
+Import `dashboard-example.json` into Grafana. Requires a Prometheus data source named `grafanacloud-prom` (rename if needed).
 
-| Feature | Priority | Notes |
-|---------|----------|-------|
-| Per-provider (not just per-model) limits | Low | Some users share a limit across all models under one provider |
-| Failure-count-based reordering | Medium | Currently sorts by usage only; could also deprioritize models that error frequently |
-| Slack/email alerts when a model exceeds N% of limit | Medium | Would require alerting rules in Grafana or a separate notification script |
-| Support for Hermes `fallback_model` (single) configs | Low | Currently only supports the `fallback_providers` list format |
-| Config validation / `--check` flag | Low | Validate `model_limits` keys match actual models |
-| Systemd timer unit instead of cron | Low | Convenience for non-cron setups |
+Dashboard sections:
+- **Spending** — total, daily, projected, budget zone
+- **Provider Health** — health scores, success rate, latency
+- **Model Usage** — tokens used, limits, usage %, smart scores
+- **Quotas** — remaining RPM/daily per provider
+- **Alerts** — active warnings and criticals
+- **Pi-hole (optional)** — DNS stats (collapsible row)
 
-### 🐛 Known Issues
+## Prometheus Metrics
 
-- `yaml.safe_dump` may reorder top-level config keys (Hermes is tolerant of key order, but worth noting)
-- `pihole-FTL.db` path is hardcoded; Pi-hole v5 vs v6 may differ
-- The `fallback_providers` config list format is not standard Hermes (which uses `fallback_model` singular) — this repo assumes a custom extended config with multiple fallbacks in a chain
+| Metric | Description |
+|--------|-------------|
+| `hermes_model_tokens_used` | Tokens used per model (7d) |
+| `hermes_model_tokens_limit` | Token limit per model |
+| `hermes_model_usage_percent` | Usage % per model |
+| `hermes_model_score` | Smart score per model |
+| `hermes_model_rank` | Rank in fallback order |
+| `hermes_health_score` | Health score per provider |
+| `hermes_cost_total` | Cumulative spend (USD) |
+| `hermes_cost_budget_percent` | Budget used % |
+| `hermes_budget_zone` | Current zone (0-3) |
+| `hermes_quota_percent` | Quota used % per provider |
+| `hermes_active_alerts` | Active alert count |
+| `hermes_context_*` | Context window metrics |
+
+## Configuration
+
+### `pricing.yaml` (customize per deployment)
+
+```yaml
+models:
+  claude-sonnet-4:
+    input_per_million: 3.00
+    output_per_million: 15.00
+    provider: anthropic
+    quality_score: 95
+    tier: premium
+
+provider_default_health:
+  groq: 98
+  openrouter: 95
+
+provider_quotas:
+  groq:
+    rpm: 30
+    daily: 1000
+```
+
+### CLI Options
+
+```bash
+python3 auto_balance.py --help
+  --config PATH       Hermes config path
+  --db PATH           Hermes state.db path
+  --pricing PATH      Pricing database path
+  --prom-path PATH    Prometheus output path
+  --budget FLOAT      Monthly budget (USD)
+  --days INT          Usage window days
+  --default-limit INT Default token limit
+  --dry-run           Preview only
+  --daemon            Persistent daemon mode
+  --interval INT      Daemon poll interval (s)
+```
+
+## Daemon Mode
+
+```bash
+# Run as a service that continuously monitors and optimizes
+python3 auto_balance.py --daemon --interval 300 \
+    --budget 50 --days 7
+
+# Systemd unit example:
+# [Unit]
+# Description=Hermes 9Router Daemon
+# [Service]
+# ExecStart=/usr/bin/python3 /root/.hermes/scripts/auto_balance.py --daemon
+# Restart=always
+# [Install]
+# WantedBy=multi-user.target
+```
+
+## Pi-hole (Optional Extra)
+
+Pi-hole DNS metrics are exported via `pihole_exporter.py` as a separate, optional feature. It is not required for model balancing.
+
+```bash
+# Export Pi-hole metrics to Prometheus
+python3 pihole_exporter.py
+```
+
+## Development
+
+All phases of the [development plan](development-plan.md) are implemented:
+
+1. ✅ Enhanced Metrics Collection
+2. ✅ Cost Engine
+3. ✅ Provider Health Monitor
+4. ✅ Complexity Analyzer
+5. ✅ Budget-Aware Optimization
+6. ✅ Smart Fallback Ordering
+7. ✅ Quota Management
+8. ✅ Alerts & Notifications
+9. ✅ Grafana Dashboard
+10. ✅ Learning Router (routing history)
+11. ✅ Code Hardening

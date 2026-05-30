@@ -1,6 +1,16 @@
 #!/bin/bash
-# Auto-balance model fallback order (last 7 days of usage)
-python3 /root/.hermes/scripts/auto_balance.py --days 7
+# ──────────────────────────────────────────────────────────────────────────────
+# Hermes 9Router — Main cron script
+# Runs smart fallback optimization, health monitoring, cost tracking,
+# quota management, and Prometheus metrics export.
+#
+# Schedule: 0 * * * * /root/.hermes/scripts/refresh_metrics.sh
+# ──────────────────────────────────────────────────────────────────────────────
 
-# Export Pi-hole DNS metrics to Prometheus
-python3 /root/.hermes/scripts/pihole_exporter.py
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Primary: full smart balancing with all subsystems
+python3 "$SCRIPT_DIR/auto_balance.py" \
+    --days 7 \
+    --budget 50 \
+    --prom-path /var/lib/alloy/9router_metrics.prom
