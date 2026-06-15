@@ -274,9 +274,13 @@ Everything else is incremental polish.
 | Grafana Cloud token configuration | Done |
 | Alloy service running and scraping textfile metrics | Done |
 | nr_* and 9router_* metrics with real data | Done |
-| hermes_* dashboard metrics via bridge exporter | Done |
-| Monthly/daily spend from 9router DB | Needs timestamp format fix |
+| hermes_* dashboard metrics via bridge exporter (hermes_exporter.py) | Done |
+| Monthly/daily spend from 9router DB | Done |
+| Model scores exported to Grafana | Done |
+| Auto-balance fallback ordering | Done |
+| Fallback providers auto-populated from usage history | Done |
+| 9router.prom format fix (invalid comment) | Done |
 | Health scores from request success/latency | Not yet implemented |
-| Quota tracking per provider | Not yet implemented |
+| Quota tracking per provider | Placeholder values only |
 | Alerts based on threshold | Not yet implemented |
 | Cron jobs running every 5-15 min | Done |
