@@ -28,443 +28,479 @@
     "spec": {
       "items": [
         {
-          "x": 0,
-          "y": 0,
-          "width": 6,
-          "height": 4,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "none" },
-                "overrides": []
-              },
-              "title": "Total Requests",
-              "description": "Total API requests routed through 9Router",
-              "targets": [
-                {
-                  "expr": "nr_requests_total",
-                  "legendFormat": "__auto",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "orientation": "auto",
-                "justifyMode": "auto",
-                "textMode": "auto",
-                "colorMode": "value",
-                "graphMode": "none"
-              },
-              "type": "stat",
-              "pluginId": "stat",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 6,
-          "y": 0,
-          "width": 6,
-          "height": 4,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "short" },
-                "overrides": []
-              },
-              "title": "Total Input Tokens",
-              "description": "Total prompt tokens consumed",
-              "targets": [
-                {
-                  "expr": "nr_input_tokens_total",
-                  "legendFormat": "__auto",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "orientation": "auto",
-                "justifyMode": "auto",
-                "textMode": "auto",
-                "colorMode": "value",
-                "graphMode": "none"
-              },
-              "type": "stat",
-              "pluginId": "stat",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 12,
-          "y": 0,
-          "width": 6,
-          "height": 4,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "short" },
-                "overrides": []
-              },
-              "title": "Total Output Tokens",
-              "description": "Total completion tokens generated",
-              "targets": [
-                {
-                  "expr": "nr_output_tokens_total",
-                  "legendFormat": "__auto",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "orientation": "auto",
-                "justifyMode": "auto",
-                "textMode": "auto",
-                "colorMode": "value",
-                "graphMode": "none"
-              },
-              "type": "stat",
-              "pluginId": "stat",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 18,
-          "y": 0,
-          "width": 6,
-          "height": 4,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "usd" },
-                "overrides": []
-              },
-              "title": "Est. Total Cost",
-              "description": "Estimated cost across all models",
-              "targets": [
-                {
-                  "expr": "nr_cost_dollars",
-                  "legendFormat": "__auto",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "orientation": "auto",
-                "justifyMode": "auto",
-                "textMode": "auto",
-                "colorMode": "value",
-                "graphMode": "none"
-              },
-              "type": "stat",
-              "pluginId": "stat",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 0,
-          "y": 4,
-          "width": 8,
-          "height": 8,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "none", "min": 0 },
-                "overrides": []
-              },
-              "title": "Requests per Model",
-              "description": "Total API requests by model",
-              "targets": [
-                {
-                  "expr": "nr_model_requests_total",
-                  "legendFormat": "{{model}}",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "orientation": "horizontal",
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-              },
-              "type": "bargauge",
-              "pluginId": "bargauge",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 8,
-          "y": 4,
-          "width": 8,
-          "height": 8,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "usd", "min": 0 },
-                "overrides": []
-              },
-              "title": "Cost per Model",
-              "description": "Estimated cost by model (from 9Router)",
-              "targets": [
-                {
-                  "expr": "nr_model_cost_dollars",
-                  "legendFormat": "{{model}}",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "orientation": "horizontal",
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-              },
-              "type": "bargauge",
-              "pluginId": "bargauge",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 16,
-          "y": 4,
-          "width": 8,
-          "height": 8,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "short", "min": 0 },
-                "overrides": []
-              },
-              "title": "Tokens per Model",
-              "description": "Combined input+output tokens",
-              "targets": [
-                {
-                  "expr": "nr_model_input_tokens_total + nr_model_output_tokens_total",
-                  "legendFormat": "{{model}}",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "orientation": "horizontal",
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-              },
-              "type": "bargauge",
-              "pluginId": "bargauge",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 0,
-          "y": 12,
-          "width": 12,
-          "height": 8,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "reqps" },
-                "overrides": []
-              },
-              "title": "Request Rate (15m avg)",
-              "description": "Rate of API requests per model",
-              "targets": [
-                {
-                  "expr": "rate(nr_model_requests_total[15m])",
-                  "legendFormat": "{{model}}",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
-                "tooltip": { "mode": "multi", "sort": "desc" }
-              },
-              "type": "timeseries",
-              "pluginId": "timeseries",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 12,
-          "y": 12,
-          "width": 12,
-          "height": 8,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "short" },
-                "overrides": []
-              },
-              "title": "Input Tokens by Model",
-              "description": "Cumulative input tokens over time",
-              "targets": [
-                {
-                  "expr": "nr_model_input_tokens_total",
-                  "legendFormat": "{{model}} (input)",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
-                "tooltip": { "mode": "multi", "sort": "desc" }
-              },
-              "type": "timeseries",
-              "pluginId": "timeseries",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 0,
-          "y": 20,
-          "width": 24,
-          "height": 10,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "none",
-                  "custom": { "align": "auto", "cellOptions": { "type": "auto" } }
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 4,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "none" },
+                  "overrides": []
                 },
-                "overrides": [
+                "title": "Total Requests",
+                "description": "Total API requests routed through 9Router",
+                "targets": [
                   {
-                    "matcher": { "id": "byName", "options": "Model" },
-                    "properties": [{ "id": "custom.width", "value": 300 }]
+                    "expr": "nr_requests_total",
+                    "legendFormat": "__auto",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "orientation": "auto",
+                  "justifyMode": "auto",
+                  "textMode": "auto",
+                  "colorMode": "value",
+                  "graphMode": "none"
+                },
+                "type": "stat",
+                "pluginId": "stat",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 6,
+            "y": 0,
+            "width": 6,
+            "height": 4,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "short" },
+                  "overrides": []
+                },
+                "title": "Total Input Tokens",
+                "description": "Total prompt tokens consumed",
+                "targets": [
+                  {
+                    "expr": "nr_input_tokens_total",
+                    "legendFormat": "__auto",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "orientation": "auto",
+                  "justifyMode": "auto",
+                  "textMode": "auto",
+                  "colorMode": "value",
+                  "graphMode": "none"
+                },
+                "type": "stat",
+                "pluginId": "stat",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 12,
+            "y": 0,
+            "width": 6,
+            "height": 4,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "short" },
+                  "overrides": []
+                },
+                "title": "Total Output Tokens",
+                "description": "Total completion tokens generated",
+                "targets": [
+                  {
+                    "expr": "nr_output_tokens_total",
+                    "legendFormat": "__auto",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "orientation": "auto",
+                  "justifyMode": "auto",
+                  "textMode": "auto",
+                  "colorMode": "value",
+                  "graphMode": "none"
+                },
+                "type": "stat",
+                "pluginId": "stat",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 18,
+            "y": 0,
+            "width": 6,
+            "height": 4,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "usd" },
+                  "overrides": []
+                },
+                "title": "Est. Total Cost",
+                "description": "Estimated cost across all models",
+                "targets": [
+                  {
+                    "expr": "nr_cost_dollars",
+                    "legendFormat": "__auto",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "orientation": "auto",
+                  "justifyMode": "auto",
+                  "textMode": "auto",
+                  "colorMode": "value",
+                  "graphMode": "none"
+                },
+                "type": "stat",
+                "pluginId": "stat",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 0,
+            "y": 4,
+            "width": 8,
+            "height": 8,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "none", "min": 0 },
+                  "overrides": []
+                },
+                "title": "Requests per Model",
+                "description": "Total API requests by model",
+                "targets": [
+                  {
+                    "expr": "nr_model_requests_total",
+                    "legendFormat": "{{model}}",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "orientation": "horizontal",
+                  "showThresholdLabels": false,
+                  "showThresholdMarkers": true
+                },
+                "type": "bargauge",
+                "pluginId": "bargauge",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 8,
+            "y": 4,
+            "width": 8,
+            "height": 8,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "usd", "min": 0 },
+                  "overrides": []
+                },
+                "title": "Cost per Model",
+                "description": "Estimated cost by model (from 9Router)",
+                "targets": [
+                  {
+                    "expr": "nr_model_cost_dollars",
+                    "legendFormat": "{{model}}",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "orientation": "horizontal",
+                  "showThresholdLabels": false,
+                  "showThresholdMarkers": true
+                },
+                "type": "bargauge",
+                "pluginId": "bargauge",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 16,
+            "y": 4,
+            "width": 8,
+            "height": 8,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "short", "min": 0 },
+                  "overrides": []
+                },
+                "title": "Tokens per Model",
+                "description": "Combined input+output tokens",
+                "targets": [
+                  {
+                    "expr": "nr_model_input_tokens_total + nr_model_output_tokens_total",
+                    "legendFormat": "{{model}}",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "orientation": "horizontal",
+                  "showThresholdLabels": false,
+                  "showThresholdMarkers": true
+                },
+                "type": "bargauge",
+                "pluginId": "bargauge",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 0,
+            "y": 12,
+            "width": 12,
+            "height": 8,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "reqps" },
+                  "overrides": []
+                },
+                "title": "Request Rate (15m avg)",
+                "description": "Rate of API requests per model",
+                "targets": [
+                  {
+                    "expr": "rate(nr_model_requests_total[15m])",
+                    "legendFormat": "{{model}}",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+                  "tooltip": { "mode": "multi", "sort": "desc" }
+                },
+                "type": "timeseries",
+                "pluginId": "timeseries",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 12,
+            "y": 12,
+            "width": 12,
+            "height": 8,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "short" },
+                  "overrides": []
+                },
+                "title": "Input Tokens by Model",
+                "description": "Cumulative input tokens over time",
+                "targets": [
+                  {
+                    "expr": "nr_model_input_tokens_total",
+                    "legendFormat": "{{model}} (input)",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+                  "tooltip": { "mode": "multi", "sort": "desc" }
+                },
+                "type": "timeseries",
+                "pluginId": "timeseries",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 0,
+            "y": 20,
+            "width": 24,
+            "height": 10,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": {
+                    "unit": "none",
+                    "custom": { "align": "auto", "cellOptions": { "type": "auto" } }
                   },
-                  {
-                    "matcher": { "id": "byName", "options": "Cost" },
-                    "properties": [
-                      { "id": "unit", "value": "usd" },
-                      { "id": "custom.cellOptions", "value": { "type": "color-text", "mode": "basic" } }
-                    ]
-                  }
-                ]
-              },
-              "title": "Model Breakdown Table",
-              "description": "Complete overview: requests, tokens, and cost per model",
-              "targets": [
-                {
-                  "expr": "nr_model_requests_total",
-                  "legendFormat": "{{model}}",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "frameIndex": 0,
-                "showHeader": true,
-                "footer": { "show": true, "countRows": false, "fields": [], "enablePagination": false }
-              },
-              "type": "table",
-              "pluginId": "table",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 0,
-          "y": 30,
-          "width": 12,
-          "height": 8,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": { "unit": "short", "min": 0 },
-                "overrides": []
-              },
-              "title": "Hourly Requests (last 48h)",
-              "description": "Requests grouped by hour from last scrape",
-              "targets": [
-                {
-                  "expr": "nr_hourly_requests",
-                  "legendFormat": "{{hour}}",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "legend": { "calcs": [], "displayMode": "hidden", "placement": "bottom" },
-                "tooltip": { "mode": "single", "sort": "none" },
-                "barAlignment": 0,
-                "fullHighlight": false
-              },
-              "type": "barchart",
-              "pluginId": "barchart",
-              "pluginVersion": "11.5.2"
-            }
-          }
-        },
-        {
-          "x": 12,
-          "y": 30,
-          "width": 12,
-          "height": 8,
-          "element": {
-            "kind": "Panel",
-            "spec": {
-              "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "none",
-                  "min": 0,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      { "color": "green", "value": null },
-                      { "color": "yellow", "value": 0.01 },
-                      { "color": "red", "value": 0.10 }
-                    ]
-                  }
+                  "overrides": [
+                    {
+                      "matcher": { "id": "byName", "options": "Model" },
+                      "properties": [{ "id": "custom.width", "value": 300 }]
+                    },
+                    {
+                      "matcher": { "id": "byName", "options": "Cost" },
+                      "properties": [
+                        { "id": "unit", "value": "usd" },
+                        { "id": "custom.cellOptions", "value": { "type": "color-text", "mode": "basic" } }
+                      ]
+                    }
+                  ]
                 },
-                "overrides": []
-              },
-              "title": "High-Cost Models",
-              "description": "Models with cost >= $0.01",
-              "targets": [
-                {
-                  "expr": "nr_model_cost_dollars >= 0.01",
-                  "legendFormat": "{{model}}",
-                  "refId": "A",
-                  "datasource": { "type": "prometheus", "uid": "${datasource}" }
-                }
-              ],
-              "options": {
-                "orientation": "horizontal",
-                "showThresholdLabels": true,
-                "showThresholdMarkers": true
-              },
-              "type": "bargauge",
-              "pluginId": "bargauge",
-              "pluginVersion": "11.5.2"
+                "title": "Full Model Table",
+                "description": "Requests, tokens, and cost per model",
+                "targets": [
+                  {
+                    "expr": "nr_model_requests_total",
+                    "legendFormat": "{{model}}",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "frameIndex": 0,
+                  "showHeader": true,
+                  "footer": { "show": true, "countRows": false, "fields": [], "enablePagination": false }
+                },
+                "type": "table",
+                "pluginId": "table",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 0,
+            "y": 30,
+            "width": 12,
+            "height": 8,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": { "unit": "short", "min": 0 },
+                  "overrides": []
+                },
+                "title": "Hourly Distribution (last 48h)",
+                "description": "Requests grouped by hour",
+                "targets": [
+                  {
+                    "expr": "nr_hourly_requests",
+                    "legendFormat": "{{hour}}",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "legend": { "calcs": [], "displayMode": "hidden", "placement": "bottom" },
+                  "tooltip": { "mode": "single", "sort": "none" },
+                  "barAlignment": 0,
+                  "fullHighlight": false
+                },
+                "type": "barchart",
+                "pluginId": "barchart",
+                "pluginVersion": "11.5.2"
+              }
+            }
+          }
+        },
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "x": 12,
+            "y": 30,
+            "width": 12,
+            "height": 8,
+            "element": {
+              "kind": "Panel",
+              "spec": {
+                "datasource": { "type": "prometheus", "uid": "${datasource}" },
+                "fieldConfig": {
+                  "defaults": {
+                    "unit": "none",
+                    "min": 0,
+                    "thresholds": {
+                      "mode": "absolute",
+                      "steps": [
+                        { "color": "green", "value": null },
+                        { "color": "yellow", "value": 0.01 },
+                        { "color": "red", "value": 0.10 }
+                      ]
+                    }
+                  },
+                  "overrides": []
+                },
+                "title": "High-Cost Models",
+                "description": "Models with cost >= $0.01",
+                "targets": [
+                  {
+                    "expr": "nr_model_cost_dollars >= 0.01",
+                    "legendFormat": "{{model}}",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "${datasource}" }
+                  }
+                ],
+                "options": {
+                  "orientation": "horizontal",
+                  "showThresholdLabels": true,
+                  "showThresholdMarkers": true
+                },
+                "type": "bargauge",
+                "pluginId": "bargauge",
+                "pluginVersion": "11.5.2"
+              }
             }
           }
         }
