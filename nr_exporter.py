@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 """
-9router_exporter.py — Export 9Router analytics to Prometheus textfile format.
+nr_exporter.py — Export 9Router analytics to Prometheus textfile format.
 
 Reads from /root/.9router/db/data.sqlite (usageHistory table) and writes
-metrics to /var/lib/alloy/textfile/9router.prom so Alloy's node_exporter
+metrics to /var/lib/alloy/textfile/nr.prom so Alloy's node_exporter
 textfile collector can scrape them and forward to Grafana Cloud.
 
-Metrics match what the 9Router web UI shows:
-  • Total requests, input/output tokens, cost per model
-  • Hourly request counts for time-series charts
-  • Recent requests summary
+Metrics use valid Prometheus names (starting with nr_ not 9router_).
 
 Usage:
-    python3 9router_exporter.py                    # write to default path
-    python3 9router_exporter.py --prom-path /tmp/foo.prom  # custom output
-    python3 9router_exporter.py --db /custom/path/data.sqlite
+    python3 nr_exporter.py
+    python3 nr_exporter.py --prom-path /tmp/foo.prom
+    python3 nr_exporter.py --db /custom/path/data.sqlite
 """
 
 import argparse
@@ -26,10 +23,10 @@ import tempfile
 from datetime import datetime, timezone, timedelta
 
 DEFAULT_DB_PATH = "/root/.9router/db/data.sqlite"
-DEFAULT_PROM_PATH = "/var/lib/alloy/textfile/9router.prom"
+DEFAULT_PROM_PATH = "/var/lib/alloy/textfile/nr.prom"
 
 
-def get_9router_db_path() -> str:
+def get_db_path() -> str:
     alt = os.path.expanduser("~/.9router/db/data.sqlite")
     if os.path.exists(alt):
         return alt
@@ -122,48 +119,49 @@ def generate_metrics(data: dict) -> str:
     header = "# 9Router Analytics — generated " + datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     lines.append(header)
-    lines.append(f"# TYPE 9router_total_requests counter")
-    lines.append(f"# TYPE 9router_total_input_tokens counter")
-    lines.append(f"# TYPE 9router_total_output_tokens counter")
-    lines.append(f"# TYPE 9router_total_cost counter")
-    lines.append(f"# TYPE 9router_model_requests counter")
-    lines.append(f"# TYPE 9router_model_input_tokens counter")
-    lines.append(f"# TYPE 9router_model_output_tokens counter")
-    lines.append(f"# TYPE 9router_model_cost counter")
-    lines.append(f"# TYPE 9router_hourly_requests gauge")
-    lines.append(f"# TYPE 9router_scrape_duration_seconds gauge")
+    lines.append("# TYPE nr_requests_total counter")
+    lines.append("# TYPE nr_input_tokens_total counter")
+    lines.append("# TYPE nr_output_tokens_total counter")
+    lines.append("# TYPE nr_cost_dollars counter")
+    lines.append("# TYPE nr_model_requests counter")
+    lines.append("# TYPE nr_model_input_tokens counter")
+    lines.append("# TYPE nr_model_output_tokens counter")
+    lines.append("# TYPE nr_model_cost counter")
+    lines.append("# TYPE nr_hourly_requests gauge")
+    lines.append("# TYPE nr_scrape_duration_seconds gauge")
 
     ts = f"{now}"
-    lines.append(f"9router_total_requests_total {totals.get('requests', 0)} {ts}")
-    lines.append(f"9router_total_input_tokens_total {totals.get('input_tokens', 0)} {ts}")
-    lines.append(f"9router_total_output_tokens_total {totals.get('output_tokens', 0)} {ts}")
-    lines.append(f"9router_total_cost_dollars {totals.get('cost', 0.0):.6f} {ts}")
+    lines.append(f"nr_requests_total {totals.get('requests', 0)} {ts}")
+    lines.append(f"nr_input_tokens_total {totals.get('input_tokens', 0)} {ts}")
+    lines.append(f"nr_output_tokens_total {totals.get('output_tokens', 0)} {ts}")
+    lines.append(f"nr_cost_dollars {totals.get('cost', 0.0):.6f} {ts}")
 
     for model, m in data.get("models", {}).items():
         label = sanitize_label(model)
-        lines.append(f'9router_model_requests_total{{model="{label}"}} {m["requests"]} {ts}')
-        lines.append(f'9router_model_input_tokens_total{{model="{label}"}} {m["input_tokens"]} {ts}')
-        lines.append(f'9router_model_output_tokens_total{{model="{label}"}} {m["output_tokens"]} {ts}')
-        lines.append(f'9router_model_cost_dollars{{model="{label}"}} {m["cost"]:.6f} {ts}')
+        lines.append(f'nr_model_requests_total{{model="{label}"}} {m["requests"]} {ts}')
+        lines.append(f'nr_model_input_tokens_total{{model="{label}"}} {m["input_tokens"]} {ts}')
+        lines.append(f'nr_model_output_tokens_total{{model="{label}"}} {m["output_tokens"]} {ts}')
+        lines.append(f'nr_model_cost_dollars{{model="{label}"}} {m["cost"]:.6f} {ts}')
 
     for hour_bucket, count in data.get("hourly", {}).items():
-        lines.append(f'9router_hourly_requests{{hour="{hour_bucket}"}} {count} {ts}')
+        lines.append(f'nr_hourly_requests{{hour="{hour_bucket}"}} {count} {ts}')
 
-    lines.append(f"9router_scrape_duration_seconds 0.01 {ts}")
+    lines.append(f"nr_scrape_duration_seconds 0.01 {ts}")
     lines.append("")
 
     return "\n".join(lines)
 
 
-def get_usage_json(db_path: str) -> str:
-    """Return JSON matching 9Router analytics view for monitor_models.py."""
+def get_usage_json(db_path: str = None) -> str:
+    if db_path is None:
+        db_path = get_db_path()
     data = query_usage(db_path)
     return json.dumps(data, indent=2, default=str)
 
 
 def export_metrics(prom_path: str = DEFAULT_PROM_PATH, db_path: str = None):
     if db_path is None:
-        db_path = get_9router_db_path()
+        db_path = get_db_path()
 
     data = query_usage(db_path)
     metrics = generate_metrics(data)
