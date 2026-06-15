@@ -41,7 +41,7 @@ prometheus.remote_write "metrics_service" {
 
     basic_auth {
       username = "3265174"
-      password = "${GRAFANA_CLOUD_TOKEN}"
+      password_file = "/etc/alloy/grafana_token"
     }
   }
 }
@@ -52,7 +52,7 @@ loki.write "grafana_cloud_loki" {
 
     basic_auth {
       username = "1628262"
-      password = "${GRAFANA_CLOUD_TOKEN}"
+      password_file = "/etc/alloy/grafana_token"
     }
   }
 }
@@ -72,7 +72,12 @@ discovery.relabel "integrations_node_exporter" {
 }
 
 prometheus.exporter.unix "integrations_node_exporter" {
-  disable_collectors = ["ipvs", "btrfs", "infiniband", "xfs", "zfs"]
+  filesystem {
+    fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$"
+    mount_points_exclude = "^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+)($|/)"
+    mount_timeout        = "5s"
+  }
+
 
   textfile {
     directory = "/var/lib/alloy/textfile/"

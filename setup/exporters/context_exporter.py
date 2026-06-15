@@ -17,7 +17,7 @@ import os
 import tempfile
 from hermes_metrics import load_config, get_usage_metrics, get_session_metrics, sanitize_prometheus_label
 
-DEFAULT_PROM_PATH = "/root/.hermes/metrics/context.prom"
+DEFAULT_PROM_PATH = "/var/lib/alloy/textfile/context.prom"
 
 
 def export_context_metrics(prom_path: str = DEFAULT_PROM_PATH):
