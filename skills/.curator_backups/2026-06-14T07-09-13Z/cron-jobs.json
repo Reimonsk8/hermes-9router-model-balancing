@@ -1,0 +1,134 @@
+{
+  "jobs": [
+    {
+      "id": "8edbee4c4075",
+      "name": "monitor-models",
+      "prompt": "Run the model monitoring script monitor_models.py and report the status of models based on remaining token capacity, sorted from highest remaining to lowest. This helps identify the fallback priority. Ensure all metrics are updated and displayed in the report.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "monitor_models.py",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "*/30 * * * *",
+        "display": "*/30 * * * *"
+      },
+      "schedule_display": "*/30 * * * *",
+      "repeat": {
+        "times": null,
+        "completed": 810
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-28T07:57:41.580828+00:00",
+      "next_run_at": "2026-06-14T07:30:00+00:00",
+      "last_run_at": "2026-06-14T07:01:09.569104+00:00",
+      "last_status": "error",
+      "last_error": "RuntimeError: HTTP 429: [gemini/gemini-3-flash-preview] [429]: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Resource has been exhausted (e.g. check quota).\",\n    \"status\": \"RESOURCE_EXHAUSTED\"\n  }\n}\n (reset after 2s)",
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "whatsapp",
+        "chat_id": "40213862678544@lid",
+        "chat_name": "Ramon",
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "profile": null
+    },
+    {
+      "id": "f6defa40a819",
+      "name": "auto-balance-models",
+      "prompt": "Run the auto_balance.py script, report the new fallback model prioritization to the user.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "auto_balance.py",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 * * * *",
+        "display": "0 * * * *"
+      },
+      "schedule_display": "0 * * * *",
+      "repeat": {
+        "times": null,
+        "completed": 396
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-28T18:10:08.703151+00:00",
+      "next_run_at": "2026-06-14T08:00:00+00:00",
+      "last_run_at": "2026-06-14T07:00:40.524105+00:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "whatsapp",
+        "chat_id": "40213862678544@lid",
+        "chat_name": "Ramon",
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "profile": null
+    },
+    {
+      "id": "69146499ae03",
+      "name": "refresh-metrics-files",
+      "prompt": "Run the metric refresh script.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "refresh_metrics.sh",
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "* * * * *",
+        "display": "* * * * *"
+      },
+      "schedule_display": "* * * * *",
+      "repeat": {
+        "times": null,
+        "completed": 23152
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-28T18:13:01.138672+00:00",
+      "next_run_at": "2026-06-14T07:10:00+00:00",
+      "last_run_at": "2026-06-14T07:09:13.606243+00:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "whatsapp",
+        "chat_id": "40213862678544@lid",
+        "chat_name": "Ramon",
+        "thread_id": null
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "profile": null
+    }
+  ],
+  "updated_at": "2026-06-14T07:09:13.607030+00:00"
+}

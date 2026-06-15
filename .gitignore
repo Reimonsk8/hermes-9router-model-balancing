@@ -9,3 +9,71 @@ __pycache__/
 
 # Temp files
 *.bak
+
+# Hermes server - sensitive/runtime files
+auth.json
+auth.lock
+*.db
+*.db-shm
+*.db-wal
+config.yaml
+config.yaml.bak*
+channel_directory.json
+gateway_state.json
+gateway.pid
+gateway.lock
+gateway.log
+processes.json
+interrupt_debug.log
+*.log
+state.db*
+
+# User data & sessions
+sessions/
+shared/
+cache/
+audio_cache/
+image_cache/
+images/
+memories/
+logs/
+pastes/
+sandboxes/
+whatsapp/
+cron/
+
+# Credentials & config
+.git-credentials
+.gitconfig
+.ash_history
+.zshrc
+.profile
+.ssh/
+.config/
+.local/
+.npm/
+.opencode/
+
+# Runtime caches
+.hermes_history
+.skills_prompt_snapshot.json
+models_dev_cache.json
+ollama_cloud_models_cache.json
+.update_check
+.install_method
+context_length_cache.yaml
+
+# Node modules
+node/
+
+# Other hermes dirs
+9router/
+9remote/
+lsp/
+bin/
+hooks/
+pairing/
+metrics/
+
+# Duplicate of root-level scripts
+scripts/

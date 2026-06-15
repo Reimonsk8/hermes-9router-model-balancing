@@ -1,0 +1,9 @@
+{
+  "last_report_path": "/root/.hermes/logs/curator/20260614-070913",
+  "last_run_at": "2026-06-14T07:09:13.689822+00:00",
+  "last_run_duration_seconds": 36.129753,
+  "last_run_summary": "auto: no changes; llm: API call failed after 1 retries: HTTP 429: [gemini/gemini-3-flash-preview] [429]: {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this erro…\narchived 3 skill(s):\n  • cli-output-formatting → messaging-platform-setup\n  • grafana-alloy-monitoring → model-monitor\n  • pihole-query-stats → model-monitor\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin messaging-platform-setup",
+  "last_run_summary_shown_at": null,
+  "paused": false,
+  "run_count": 3
+}

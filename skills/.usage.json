@@ -1,0 +1,54 @@
+{
+  "cli-output-formatting": {
+    "archived_at": null,
+    "created_at": "2026-05-28T17:26:53.299789+00:00",
+    "created_by": "agent",
+    "last_patched_at": "2026-05-28T17:27:05.616563+00:00",
+    "last_used_at": "2026-06-14T07:09:26.269354+00:00",
+    "last_viewed_at": "2026-06-14T07:09:26.247874+00:00",
+    "patch_count": 1,
+    "pinned": false,
+    "state": "active",
+    "use_count": 1,
+    "view_count": 1
+  },
+  "messaging-platform-setup": {
+    "archived_at": null,
+    "created_at": "2026-05-24T05:41:14.985384+00:00",
+    "created_by": "agent",
+    "last_patched_at": "2026-06-14T07:09:45.044403+00:00",
+    "last_used_at": "2026-06-14T07:09:26.276426+00:00",
+    "last_viewed_at": "2026-06-14T07:09:26.254907+00:00",
+    "patch_count": 2,
+    "pinned": false,
+    "state": "active",
+    "use_count": 1,
+    "view_count": 1
+  },
+  "model-monitor": {
+    "archived_at": null,
+    "created_at": "2026-05-28T17:35:15.832800+00:00",
+    "created_by": "agent",
+    "last_patched_at": "2026-06-14T07:09:34.907070+00:00",
+    "last_used_at": "2026-06-15T04:58:16.073518+00:00",
+    "last_viewed_at": "2026-06-15T00:30:40.125403+00:00",
+    "patch_count": 8,
+    "pinned": false,
+    "state": "active",
+    "use_count": 94,
+    "view_count": 92
+  },
+  "pihole-query-stats": {
+    "archived_at": null,
+    "created_at": "2026-05-24T19:57:17.696189+00:00",
+    "created_by": "agent",
+    "last_patched_at": null,
+    "last_used_at": "2026-06-14T07:09:26.210128+00:00",
+    "last_viewed_at": "2026-06-14T07:09:26.194161+00:00",
+    "patch_count": 0,
+    "pinned": false,
+    "state": "active",
+    "use_count": 6,
+    "view_count": 6
+  }
+}
