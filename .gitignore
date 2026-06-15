@@ -1,0 +1,11 @@
+# Secrets
+setup/alloy.config.alloy
+*.pem
+*.key
+.env
+
+# Pycache
+__pycache__/
+
+# Temp files
+*.bak

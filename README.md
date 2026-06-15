@@ -175,3 +175,76 @@ All phases of the [development plan](development-plan.md) are implemented:
 9. ✅ Grafana Dashboard
 10. ✅ Learning Router (routing history)
 11. ✅ Code Hardening
+
+## Monitoring Setup (Grafana Alloy + Textfile Collector)
+
+This repository includes a complete Grafana Cloud monitoring setup using [Grafana Alloy](https://grafana.com/docs/alloy/latest/).
+
+### Architecture
+
+```
+hermes_metrics.py / auto_balance.py
+  → /var/lib/alloy/9router_metrics.prom  (hermes_model_* metrics)
+pihole_exporter.py
+  → /var/lib/alloy/pihole_metrics.prom   (Pi-hole DNS metrics)
+context_exporter.py
+  → /root/.hermes/metrics/context.prom    (context window metrics)
+       ↓
+  textfile collector (node_exporter)
+       ↓
+  Alloy → Grafana Cloud Prometheus
+```
+
+### Quick Start
+
+```bash
+# 1. Run the setup script (copies config, links prom files, adds cron jobs)
+bash setup/configure.sh
+
+# 2. Verify Alloy is running
+rc-service alloy status
+
+# 3. Check logs
+tail -f /var/log/alloy/alloy.log
+```
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `setup/alloy.config.alloy` | Grafana Alloy configuration (textfile collector, remote write) |
+| `setup/configure.sh` | One-shot setup script for textfile collector + cron |
+| `setup/current_crontab.txt` | Snapshot of current cron jobs |
+| `setup/exporters/` | Copies of all metric exporter scripts |
+
+### Cron Jobs
+
+The following cron entries are added by `setup/configure.sh`:
+
+```cron
+# Hermes metrics generators (every 15 min)
+*/15 * * * * cd /root/.hermes/scripts && python3 pihole_exporter.py >/dev/null 2>&1
+*/15 * * * * cd /root/.hermes/scripts && python3 context_exporter.py >/dev/null 2>&1
+
+# Model balancing (every 30 min)
+*/30 * * * * cd /root/.hermes/scripts && python3 auto_balance.py --days 7 --budget 50 >/dev/null 2>&1
+```
+
+### Textfile Collector
+
+The node_exporter textfile collector reads `.prom` files from `/var/lib/alloy/textfile/`.
+All metric exporters write their `.prom` files here (via symlinks) so Alloy automatically collects them.
+
+```bash
+ls -la /var/lib/alloy/textfile/
+# 9router_metrics.prom → /var/lib/alloy/9router_metrics.prom
+# context.prom → /root/.hermes/metrics/context.prom
+# pihole_metrics.prom → /var/lib/alloy/pihole_metrics.prom
+```
+
+### Restarting Alloy
+
+```bash
+rc-service alloy restart
+tail -f /var/log/alloy/alloy.log
+```

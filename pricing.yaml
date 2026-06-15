@@ -12,6 +12,13 @@ provider_default_health:
   deepseek: 85
   nous: 80
   local: 99
+  gemini: 95
+  cerebras: 96
+  ds: 85
+  fireworks: 90
+  nvidia: 88
+  mistral: 87
+  cohere: 85
 
 provider_quotas:
   groq:
@@ -29,6 +36,27 @@ provider_quotas:
   anthropic:
     rpm: 50
     daily: 5000
+  deepseek:
+    rpm: 20
+    daily: 2000
+  cerebras:
+    rpm: 30
+    daily: 3000
+  ds:
+    rpm: 20
+    daily: 2000
+  fireworks:
+    rpm: 20
+    daily: 2000
+  nvidia:
+    rpm: 15
+    daily: 1500
+  mistral:
+    rpm: 30
+    daily: 3000
+  cohere:
+    rpm: 20
+    daily: 2000
 
 models:
   claude-sonnet-4:
@@ -121,3 +149,197 @@ models:
     provider: local
     quality_score: 65
     tier: free
+
+  # Actual gateway models from localhost:20128
+  gemini/gemini-2.0-flash-lite:
+    input_per_million: 0
+    output_per_million: 0
+    provider: gemini
+    quality_score: 70
+    tier: free
+  gemini/gemini-3.1-flash-lite-preview:
+    input_per_million: 0
+    output_per_million: 0
+    provider: gemini
+    quality_score: 75
+    tier: free
+  gemini/gemini-3-flash-preview:
+    input_per_million: 0
+    output_per_million: 0
+    provider: gemini
+    quality_score: 80
+    tier: free
+  gemini/gemini-3.1-pro-preview:
+    input_per_million: 0
+    output_per_million: 0
+    provider: gemini
+    quality_score: 88
+    tier: free
+  gemini/gemma-4-31b-it:
+    input_per_million: 0
+    output_per_million: 0
+    provider: gemini
+    quality_score: 72
+    tier: free
+  ds/deepseek-v4-flash:
+    input_per_million: 0
+    output_per_million: 0
+    provider: deepseek
+    quality_score: 78
+    tier: free
+  ds/deepseek-chat:
+    input_per_million: 0.14
+    output_per_million: 0.28
+    provider: deepseek
+    quality_score: 82
+    tier: budget
+  ds/deepseek-reasoner:
+    input_per_million: 0.55
+    output_per_million: 2.19
+    provider: deepseek
+    quality_score: 88
+    tier: premium
+  ds/deepseek-v4-pro:
+    input_per_million: 0.50
+    output_per_million: 1.50
+    provider: deepseek
+    quality_score: 86
+    tier: premium
+  ds/deepseek-v4-pro-max:
+    input_per_million: 1.00
+    output_per_million: 3.00
+    provider: deepseek
+    quality_score: 90
+    tier: premium
+  ds/deepseek-v4-pro-none:
+    input_per_million: 0.30
+    output_per_million: 1.00
+    provider: deepseek
+    quality_score: 85
+    tier: premium
+  groq/meta-llama/llama-4-maverick-17b-128e-instruct:
+    input_per_million: 0
+    output_per_million: 0
+    provider: groq
+    quality_score: 76
+    tier: free
+  groq/openai/gpt-oss-120b:
+    input_per_million: 0
+    output_per_million: 0
+    provider: groq
+    quality_score: 74
+    tier: free
+  groq/llama-3.3-70b-versatile:
+    input_per_million: 0
+    output_per_million: 0
+    provider: groq
+    quality_score: 73
+    tier: free
+  groq/qwen/qwen3-32b:
+    input_per_million: 0
+    output_per_million: 0
+    provider: groq
+    quality_score: 72
+    tier: free
+  cerebras/gpt-oss-120b:
+    input_per_million: 0
+    output_per_million: 0
+    provider: cerebras
+    quality_score: 78
+    tier: free
+  cerebras/qwen-3-32b:
+    input_per_million: 0
+    output_per_million: 0
+    provider: cerebras
+    quality_score: 76
+    tier: free
+  cerebras/llama-4-scout-17b-16e-instruct:
+    input_per_million: 0
+    output_per_million: 0
+    provider: cerebras
+    quality_score: 74
+    tier: free
+  cerebras/llama-3.3-70b:
+    input_per_million: 0
+    output_per_million: 0
+    provider: cerebras
+    quality_score: 73
+    tier: free
+  cerebras/zai-glm-4.7:
+    input_per_million: 0
+    output_per_million: 0
+    provider: cerebras
+    quality_score: 78
+    tier: free
+  cerebras/qwen-3-235b-a22b-instruct-2507:
+    input_per_million: 0
+    output_per_million: 0
+    provider: cerebras
+    quality_score: 82
+    tier: free
+  fireworks/accounts/fireworks/models/llama-v3p3-70b-instruct:
+    input_per_million: 0
+    output_per_million: 0
+    provider: fireworks
+    quality_score: 73
+    tier: free
+  fireworks/accounts/fireworks/models/qwen3-235b-a22b:
+    input_per_million: 0
+    output_per_million: 0
+    provider: fireworks
+    quality_score: 78
+    tier: free
+  fireworks/accounts/fireworks/models/deepseek-v3p1:
+    input_per_million: 0
+    output_per_million: 0
+    provider: fireworks
+    quality_score: 85
+    tier: free
+  nvidia/minimaxai/minimax-m2.7:
+    input_per_million: 0
+    output_per_million: 0
+    provider: nvidia
+    quality_score: 76
+    tier: free
+  nvidia/z-ai/glm4.7:
+    input_per_million: 0
+    output_per_million: 0
+    provider: nvidia
+    quality_score: 80
+    tier: free
+  mistral/mistral-large-latest:
+    input_per_million: 2.00
+    output_per_million: 6.00
+    provider: mistral
+    quality_score: 84
+    tier: premium
+  mistral/codestral-latest:
+    input_per_million: 1.00
+    output_per_million: 3.00
+    provider: mistral
+    quality_score: 82
+    tier: premium
+  mistral/mistral-medium-latest:
+    input_per_million: 0.70
+    output_per_million: 2.00
+    provider: mistral
+    quality_score: 78
+    tier: budget
+  cohere/command-r-08-2024:
+    input_per_million: 0.15
+    output_per_million: 0.60
+    provider: cohere
+    quality_score: 70
+    tier: free
+  cohere/command-r-plus-08-2024:
+    input_per_million: 0.30
+    output_per_million: 15.00
+    provider: cohere
+    quality_score: 75
+    tier: budget
+  cohere/command-a-03-2025:
+    input_per_million: 2.50
+    output_per_million: 10.00
+    provider: cohere
+    quality_score: 82
+    tier: premium
