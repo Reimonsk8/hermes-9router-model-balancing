@@ -2,9 +2,14 @@
 """
 monitor_models.py — Hermes model usage viewer with progress bars.
 
+Reads from Hermes state.db by default. Use --nine-router to read real cost
+and usage data from the 9Router SQLite database.
+
 Usage:
     python3 monitor_models.py
     python3 monitor_models.py --days 7
+    python3 monitor_models.py --nine-router
+    python3 monitor_models.py --nine-router --days 7
     python3 monitor_models.py --days 7 --scores
     python3 monitor_models.py --days 7 --budget
     python3 monitor_models.py --days 7 --alerts
@@ -16,7 +21,7 @@ import json
 import os
 import sqlite3
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from hermes_metrics import (
@@ -25,7 +30,8 @@ from hermes_metrics import (
     DEFAULT_PRICING_PATH, DEFAULT_BUDGET_MONTHLY,
 )
 
-# Default token limits per model (when not in config/pricing)
+DEFAULT_9ROUTER_DB = "/root/.9router/db/data.sqlite"
+
 DEFAULT_MODEL_LIMITS = {
     "gemini/gemini-3-flash-preview": 1048576,
     "gemini/gemini-2.0-flash-lite": 1048576,
@@ -101,6 +107,101 @@ def get_session_models(db_path: str, days: Optional[int] = None) -> list[dict]:
     return rows
 
 
+def get_9router_models(db_path: str, days: Optional[int] = None) -> list[dict]:
+    if not os.path.exists(db_path):
+        print(f"9Router DB not found: {db_path}", file=sys.stderr)
+        return []
+
+    conn = sqlite3.connect(db_path)
+    rows = []
+    try:
+        cursor = conn.cursor()
+        if days:
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%S")
+            params = [cutoff]
+            where = "WHERE status = 'ok' AND model IS NOT NULL AND model != '' AND timestamp >= ?"
+        else:
+            params = []
+            where = "WHERE status = 'ok' AND model IS NOT NULL AND model != ''"
+
+        cursor.execute(f"""
+            SELECT
+                model,
+                COUNT(*) as requests,
+                COALESCE(SUM(promptTokens), 0) as input_tokens,
+                COALESCE(SUM(completionTokens), 0) as output_tokens,
+                COALESCE(SUM(cost), 0.0) as total_cost
+            FROM usageHistory
+            {where}
+            GROUP BY model
+            ORDER BY requests DESC
+        """, params)
+
+        for row in cursor.fetchall():
+            rows.append({
+                "model": row[0],
+                "tokens": row[2] + row[3],
+                "input_tokens": row[2],
+                "output_tokens": row[3],
+                "sessions": row[1],
+                "total_cost": row[4],
+                "api_calls": row[1],
+                "reasoning_tokens": 0,
+            })
+    except sqlite3.Error as e:
+        print(f"9Router DB error: {e}", file=sys.stderr)
+    finally:
+        conn.close()
+    return rows
+
+
+def get_9router_summary(db_path: str) -> dict:
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT
+                COUNT(*) as requests,
+                COALESCE(SUM(promptTokens), 0) as input_tokens,
+                COALESCE(SUM(completionTokens), 0) as output_tokens,
+                COALESCE(SUM(cost), 0.0) as cost
+            FROM usageHistory
+            WHERE status = 'ok'
+        """)
+        row = cursor.fetchone()
+        return {
+            "requests": row[0],
+            "input_tokens": row[1],
+            "output_tokens": row[2],
+            "cost": row[3],
+        }
+    finally:
+        conn.close()
+
+
+def get_9router_recent(db_path: str, limit: int = 20) -> list[dict]:
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, timestamp, provider, model, promptTokens, completionTokens, cost
+            FROM usageHistory
+            WHERE status = 'ok'
+            ORDER BY id DESC LIMIT ?
+        """, (limit,))
+        return [{
+            "id": r[0],
+            "ts": r[1],
+            "provider": r[2] or "",
+            "model": r[3] or "",
+            "input": r[4] or 0,
+            "output": r[5] or 0,
+            "cost": r[6] or 0.0,
+        } for r in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
 def format_tokens(n: int) -> str:
     if n >= 1_000_000:
         return f"{n/1_000_000:.1f}M"
@@ -117,6 +218,22 @@ def fmt_time(seconds: float) -> str:
     elif seconds < 86400:
         return f"{seconds/3600:.0f}h"
     return f"{seconds/86400:.0f}d"
+
+
+def fmt_ago(ts_str: str) -> str:
+    try:
+        ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+        delta = datetime.now(timezone.utc) - ts
+        if delta.total_seconds() < 60:
+            return f"{int(delta.total_seconds())}s ago"
+        elif delta.total_seconds() < 3600:
+            return f"{int(delta.total_seconds() / 60)}m ago"
+        elif delta.total_seconds() < 86400:
+            return f"{int(delta.total_seconds() / 3600)}h ago"
+        else:
+            return f"{int(delta.total_seconds() / 86400)}d ago"
+    except:
+        return ts_str
 
 
 def progress_bar(pct: float, width: int = 10) -> str:
@@ -138,13 +255,110 @@ def main():
     parser.add_argument("--config", default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--db", default=DEFAULT_DB_PATH)
     parser.add_argument("--pricing", default=DEFAULT_PRICING_PATH)
+    parser.add_argument("--9router-db", dest="nr_db", default=DEFAULT_9ROUTER_DB)
     parser.add_argument("--days", type=int, default=None)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--budget", type=float, default=DEFAULT_BUDGET_MONTHLY)
     parser.add_argument("--scores", action="store_true")
     parser.add_argument("--alerts", action="store_true")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--nine-router", dest="nr_mode", action="store_true", help="Read real usage/cost from 9Router DB")
     args = parser.parse_args()
+
+    if args.nr_mode:
+        summary = get_9router_summary(args.nr_db)
+        if not summary:
+            print("No data in 9Router DB.", file=sys.stderr)
+            return
+
+        models_data = get_9router_models(args.nr_db, days=args.days)
+        recent = get_9router_recent(args.nr_db)
+
+        config = load_config(args.config)
+        pricing = load_pricing(args.pricing)
+        pricing_models = pricing.get("models", {})
+        configured_limits = config.get("model_limits", {})
+        default_limit = args.limit
+
+        for m in models_data:
+            pm = pricing_models.get(m["model"], {})
+            limit = configured_limits.get(
+                m["model"],
+                DEFAULT_MODEL_LIMITS.get(m["model"], pm.get("token_limit", default_limit))
+            )
+            m["limit"] = limit
+            m["pct"] = (m["tokens"] / m["limit"]) * 100 if m["limit"] else 0
+            m["tier"] = pm.get("tier", "?")
+            provider = m["model"].split("/")[0] if "/" in m["model"] else m["model"]
+            m["health"] = pm.get("health_score", pricing.get("provider_default_health", {}).get(provider, 95))
+            m["latency"] = pm.get("latency_ms", pricing.get("provider_default_latency", {}).get(provider, 1000))
+
+        if args.json:
+            output = {
+                "summary": summary,
+                "models": models_data,
+                "recent": recent,
+            }
+            print(json.dumps(output, indent=2, default=str))
+            return
+
+        total_tokens = sum(m["tokens"] for m in models_data)
+        total_sessions = sum(m["sessions"] for m in models_data)
+
+        print(f"\n{' 9Router Analytics (real data) ':=^90}")
+        print(f"  Total Requests: {summary['requests']}")
+        print(f"  Total Input:    {format_tokens(summary['input_tokens'])} tokens")
+        print(f"  Total Output:   {format_tokens(summary['output_tokens'])} tokens")
+        print(f"  Est. Cost:      ${summary['cost']:.4f}")
+        print("=" * 90)
+
+        print(f"\n{' Model Usage ':=^90}")
+        for m in models_data:
+            name = short_model(m["model"])
+            used_str = format_tokens(m["tokens"])
+            limit_val = m["limit"]
+            limit_str = format_tokens(limit_val) if limit_val else "N/A"
+            pct = m["pct"]
+            bar = progress_bar(pct, 10) if limit_val else "[---N/A---]"
+            pct_str = f"{pct:.1f}%" if limit_val else "--.-%"
+
+            time_est = ""
+            if limit_val and pct > 0:
+                used = m["tokens"]
+                left = limit_val - used
+                if left > 0:
+                    est = (left / used) * 3600
+                    time_est = f"{' '}{fmt_time(est)}"
+                else:
+                    time_est = " exhausted"
+
+            line = (
+                f"\u2695 {name:<30}"
+                f" | {used_str:>7}/{limit_str:<7}"
+                f" | {bar:>12}"
+                f" | {pct_str:>6}"
+                f" | {time_est:>10}"
+                f" | \u23f1 {m['latency']:.0f}ms"
+                f" | cost=${m['total_cost']:.4f}"
+                f" | tier={m['tier']}"
+                f" | health={m['health']:.0f}%"
+                f" | req={m['sessions']}"
+            )
+            print(line)
+
+        print("=" * 90)
+        print(f"  Total: {format_tokens(total_tokens)} tokens, {total_sessions} requests")
+
+        print(f"\n{' Recent Requests ':=^90}")
+        print(f"  {'Model':<35} {'In':>8} / {'Out':<6} {'Cost':>10} {'When':<12}")
+        print("  " + "-" * 75)
+        for r in recent:
+            mname = short_model(r["model"])
+            cost_str = f"${r['cost']:.4f}" if r['cost'] > 0 else "$0"
+            print(f"  {mname:<35} {r['input']:>8} / {r['output']:<6} {cost_str:>10} {fmt_ago(r['ts']):<12}")
+        print("-" * 90)
+
+        return
 
     config = load_config(args.config)
     pricing = load_pricing(args.pricing)
@@ -251,7 +465,7 @@ def main():
     total_tokens = sum(m["tokens"] for m in models_data)
     total_sessions = sum(m["sessions"] for m in models_data)
 
-    print(f"\n{' Model Usage ':=^90}")
+    print(f"\n{' Model Usage (Hermes state.db) ':=^90}")
     for m in models_data:
         name = short_model(m["model"])
         used_str = format_tokens(m["tokens"])

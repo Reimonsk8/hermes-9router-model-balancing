@@ -149,7 +149,7 @@ models:
     provider: ds
     tier: free
     token_limit: 262144
-  fireworks/accounts/fireworks/models/deepseek-v3p1:
+  fireworks/accounts/fireworks/models/deepseek-v3:
     health_score: 90
     input_per_million: 0.8
     latency_ms: 800
