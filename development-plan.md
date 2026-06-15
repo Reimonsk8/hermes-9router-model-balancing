@@ -264,3 +264,19 @@ This single command:
 9. Evaluates alert conditions
 
 Everything else is incremental polish.
+
+
+### Phase 12 — Grafana Cloud Integration
+
+| Feature | Status |
+|---------|--------|
+| Prometheus remote write via Alloy | Done |
+| Grafana Cloud token configuration | Done |
+| Alloy service running and scraping textfile metrics | Done |
+| nr_* and 9router_* metrics with real data | Done |
+| hermes_* dashboard metrics via bridge exporter | Done |
+| Monthly/daily spend from 9router DB | Needs timestamp format fix |
+| Health scores from request success/latency | Not yet implemented |
+| Quota tracking per provider | Not yet implemented |
+| Alerts based on threshold | Not yet implemented |
+| Cron jobs running every 5-15 min | Done |
