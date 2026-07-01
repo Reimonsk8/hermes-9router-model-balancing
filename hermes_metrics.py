@@ -21,7 +21,6 @@ import os
 import json
 import logging
 import tempfile
-import math
 from datetime import datetime, timedelta
 from typing import Optional, Any
 from pathlib import Path
@@ -537,6 +536,12 @@ class CompanionDB:
         try:
             c = conn.cursor()
             c.execute(
+                "SELECT id FROM alerts WHERE severity = ? AND message = ? AND acknowledged = 0 LIMIT 1",
+                (severity, message)
+            )
+            if c.fetchone():
+                return
+            c.execute(
                 "INSERT INTO alerts (timestamp, severity, message) VALUES (?, ?, ?)",
                 (datetime.now().isoformat(), severity, message)
             )
@@ -627,19 +632,19 @@ class NineRouter:
         conn = self.db._conn()
         try:
             c = conn.cursor()
-            c.execute(
-                "SELECT model, input_tokens, output_tokens, cost_usd FROM requests WHERE cost_usd = 0"
-            )
-            rows = c.fetchall()
-            for row in rows:
+            c.execute("SELECT DISTINCT model FROM requests WHERE cost_usd = 0")
+            for row in c.fetchall():
                 model = row[0]
-                inp = row[1]
-                out = row[2]
-                model_pricing = get_model_pricing(model, self.pricing)
-                if model_pricing:
-                    cost = calculate_cost(inp, out, model_pricing)
-                    c.execute("UPDATE requests SET cost_usd = ? WHERE model = ? AND input_tokens = ? AND output_tokens = ? AND cost_usd = 0",
-                              (cost, model, inp, out))
+                pricing = get_model_pricing(model, self.pricing)
+                if not pricing:
+                    continue
+                inp_price = pricing.get("input_per_million", 0)
+                out_price = pricing.get("output_per_million", 0)
+                c.execute(
+                    "UPDATE requests SET cost_usd = ROUND((input_tokens / 1000000.0 * ? + output_tokens / 1000000.0 * ?), 6) "
+                    "WHERE model = ? AND cost_usd = 0",
+                    (inp_price, out_price, model)
+                )
             conn.commit()
         finally:
             conn.close()
@@ -699,32 +704,6 @@ class NineRouter:
             "projected": round(projected, 2),
         }
 
-    # ── Complexity Analysis ──────────────────────────────────────────────────
-
-    def classify_request(self, prompt_length: int = 0, task_hint: str = "") -> str:
-        """Classify request complexity based on available hints.
-        Returns: 'simple', 'medium', 'complex'
-        """
-        hint_lower = task_hint.lower()
-        complex_keywords = ["research", "architecture", "plan", "design", "analyze",
-                            "refactor", "complex", "large", "full", "complete"]
-        simple_keywords = ["translate", "summarize", "explain", "define", "what",
-                           "short", "fix", "typo", "grammar"]
-
-        if any(k in hint_lower for k in complex_keywords) or prompt_length > 4000:
-            return "complex"
-        if any(k in hint_lower for k in simple_keywords) or prompt_length < 200:
-            return "simple"
-        return "medium"
-
-    def get_tier_for_complexity(self, complexity: str) -> str:
-        tiers = {
-            "simple": "free",
-            "medium": "budget",
-            "complex": "premium",
-        }
-        return tiers.get(complexity, "budget")
-
     # ── Smart Scoring ────────────────────────────────────────────────────────
 
     def score_models(self) -> list[dict]:
@@ -735,6 +714,26 @@ class NineRouter:
         quota_status = self.db.get_quota_status()
 
         scored = []
+
+        # Batch get latency averages for all providers before loop
+        latency_scores = {}
+        conn = self.db._conn()
+        try:
+            c = conn.cursor()
+            c.execute("SELECT provider, AVG(latency_ms) FROM requests WHERE latency_ms > 0 GROUP BY provider")
+            for prov, avg_lat in c.fetchall():
+                if avg_lat:
+                    if avg_lat > 10000:
+                        latency_scores[prov] = 30
+                    elif avg_lat > 5000:
+                        latency_scores[prov] = 60
+                    elif avg_lat > 2000:
+                        latency_scores[prov] = 80
+                    else:
+                        latency_scores[prov] = 100
+        finally:
+            conn.close()
+
         for entry in fallback_entries:
             model = entry["model"]
             provider = entry.get("provider", "unknown")
@@ -765,24 +764,7 @@ class NineRouter:
                         quota_score = 70
 
             # Latency score (0-100) — shorter is better
-            conn = self.db._conn()
-            latency_score = 100
-            try:
-                c = conn.cursor()
-                c.execute(
-                    "SELECT AVG(latency_ms) FROM requests WHERE provider = ? AND latency_ms > 0",
-                    (provider,)
-                )
-                avg_lat = c.fetchone()[0]
-                if avg_lat:
-                    if avg_lat > 10000:
-                        latency_score = 30
-                    elif avg_lat > 5000:
-                        latency_score = 60
-                    elif avg_lat > 2000:
-                        latency_score = 80
-            finally:
-                conn.close()
+            latency_score = latency_scores.get(provider, 100)
 
             # Cost score (0-100) — cheaper is better
             inp_price = model_pricing.get("input_per_million", 0)

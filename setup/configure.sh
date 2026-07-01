@@ -16,7 +16,6 @@ chmod 755 /var/lib/alloy/textfile
 echo "=== Linking prom files ==="
 ln -sf /var/lib/alloy/9router_metrics.prom /var/lib/alloy/textfile/9router_metrics.prom
 ln -sf /var/lib/alloy/pihole_metrics.prom /var/lib/alloy/textfile/pihole_metrics.prom
-ln -sf /root/.hermes/metrics/context.prom /var/lib/alloy/textfile/context.prom
 
 echo "=== Installing Alloy config ==="
 if [ -n "$GRAFANA_CLOUD_TOKEN" ]; then
@@ -33,7 +32,6 @@ echo "=== Adding cron jobs ==="
 (crontab -l 2>/dev/null | grep -v "^#"; \
  echo "# Hermes metrics exporters"; \
  echo "*/15 * * * * cd /root/.hermes/scripts && python3 pihole_exporter.py >/dev/null 2>&1"; \
- echo "*/15 * * * * cd /root/.hermes/scripts && python3 context_exporter.py >/dev/null 2>&1"; \
 ) | crontab -
 
 echo "=== Restarting Alloy ==="

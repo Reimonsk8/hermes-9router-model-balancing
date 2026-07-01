@@ -113,7 +113,6 @@ def sanitize_label(s: str) -> str:
 
 def generate_metrics(data: dict) -> str:
     lines = []
-    now = int(datetime.now(timezone.utc).timestamp())
 
     totals = data.get("totals", {})
     header = "# 9Router Analytics — generated " + datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -130,23 +129,22 @@ def generate_metrics(data: dict) -> str:
     lines.append("# TYPE nr_hourly_requests gauge")
     lines.append("# TYPE nr_scrape_duration_seconds gauge")
 
-    ts = f"{now}"
-    lines.append(f"nr_requests_total {totals.get('requests', 0)} {ts}")
-    lines.append(f"nr_input_tokens_total {totals.get('input_tokens', 0)} {ts}")
-    lines.append(f"nr_output_tokens_total {totals.get('output_tokens', 0)} {ts}")
-    lines.append(f"nr_cost_dollars {totals.get('cost', 0.0):.6f} {ts}")
+    lines.append(f"nr_requests_total {totals.get('requests', 0)}")
+    lines.append(f"nr_input_tokens_total {totals.get('input_tokens', 0)}")
+    lines.append(f"nr_output_tokens_total {totals.get('output_tokens', 0)}")
+    lines.append(f"nr_cost_dollars {totals.get('cost', 0.0):.6f}")
 
     for model, m in data.get("models", {}).items():
         label = sanitize_label(model)
-        lines.append(f'nr_model_requests_total{{model="{label}"}} {m["requests"]} {ts}')
-        lines.append(f'nr_model_input_tokens_total{{model="{label}"}} {m["input_tokens"]} {ts}')
-        lines.append(f'nr_model_output_tokens_total{{model="{label}"}} {m["output_tokens"]} {ts}')
-        lines.append(f'nr_model_cost_dollars{{model="{label}"}} {m["cost"]:.6f} {ts}')
+        lines.append(f'nr_model_requests_total{{model="{label}"}} {m["requests"]}')
+        lines.append(f'nr_model_input_tokens_total{{model="{label}"}} {m["input_tokens"]}')
+        lines.append(f'nr_model_output_tokens_total{{model="{label}"}} {m["output_tokens"]}')
+        lines.append(f'nr_model_cost_dollars{{model="{label}"}} {m["cost"]:.6f}')
 
     for hour_bucket, count in data.get("hourly", {}).items():
-        lines.append(f'nr_hourly_requests{{hour="{hour_bucket}"}} {count} {ts}')
+        lines.append(f'nr_hourly_requests{{hour="{hour_bucket}"}} {count}')
 
-    lines.append(f"nr_scrape_duration_seconds 0.01 {ts}")
+    lines.append(f"nr_scrape_duration_seconds 0.01")
     lines.append("")
 
     return "\n".join(lines)

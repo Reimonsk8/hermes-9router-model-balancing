@@ -187,8 +187,6 @@ hermes_metrics.py / auto_balance.py
   → /var/lib/alloy/9router_metrics.prom  (hermes_model_* metrics)
 pihole_exporter.py
   → /var/lib/alloy/pihole_metrics.prom   (Pi-hole DNS metrics)
-context_exporter.py
-  → /root/.hermes/metrics/context.prom    (context window metrics)
        ↓
   textfile collector (node_exporter)
        ↓
@@ -224,7 +222,6 @@ The following cron entries are added by `setup/configure.sh`:
 ```cron
 # Hermes metrics generators (every 15 min)
 */15 * * * * cd /root/.hermes/scripts && python3 pihole_exporter.py >/dev/null 2>&1
-*/15 * * * * cd /root/.hermes/scripts && python3 context_exporter.py >/dev/null 2>&1
 
 # Model balancing (every 30 min)
 */30 * * * * cd /root/.hermes/scripts && python3 auto_balance.py --days 7 --budget 50 >/dev/null 2>&1
@@ -238,7 +235,6 @@ All metric exporters write their `.prom` files here (via symlinks) so Alloy auto
 ```bash
 ls -la /var/lib/alloy/textfile/
 # 9router_metrics.prom → /var/lib/alloy/9router_metrics.prom
-# context.prom → /root/.hermes/metrics/context.prom
 # pihole_metrics.prom → /var/lib/alloy/pihole_metrics.prom
 ```
 
